@@ -24,13 +24,220 @@ condition_variable ModbusQueueCondVar;
 std::queue<Rs422>modbus_task;
 
 json global_config;
-float Motor_ratio[3] = { 5000,5000,95.2 };
+
+
+//ÔË¶¯¿ØÖÆ²ÎÊı¶¨Òå
+static float Z_Move_Distance = 0.5f;
+static float Z_Accelerate = 12.0f;
+static float Z_Velocity = 3.0f;
+
+static float F_Move_Distance = 1.0f;
+static float F_Accelerate = 12.0f;
+static float F_Velocity = 3.0f;
+
+static float C_Move_Distance = 20.0f;
+static float C_Accelerate = 350.0f;
+static float C_Velocity = 150.0f;
+
+static struct {
+	char device[32] = "COM2";//´®ĞĞ¶Ë¿ÚÃû³Æ
+	int baud = 19200;//²¨ÌØÂÊ
+	char parity = 'N';//ÆæÅ¼Ğ£Ñé
+	int data_bit = 8;//Ö¸¶¨Êı¾İµÄÎ»Êı
+	int stop_bit = 1;//Ö¸¶¨Í£Ö¹Î»Î»Êı
+}rtu_set_;
+
+// Define the CharmRayPlcRegs here (moved from header)
+#pragma pack(push, 2)
+struct CharmRayPlcRegs
+{
+    //ModbusµØÖ·40011
+    struct
+    {
+        unsigned short security : 1;        //0
+        unsigned short light : 1;            //1
+        unsigned short red_light : 1;        //2
+        unsigned short greeen_light : 1;    //3
+        unsigned short blue_light : 1;        //4
+        unsigned short alarm : 1;            //5
+        unsigned short big_valve : 1;        //6
+        unsigned short small_valve : 1;    //7
+        unsigned short ventilate : 1;        //8
+        unsigned short lase_power : 1;        //9
+        unsigned short fan_power : 1;        //10
+        unsigned short motor_power : 1;        //11
+        unsigned short laser_indicator : 1;    //12
+        unsigned short laser_enabled : 1;    //13
+        unsigned short laser_on : 1;        //14
+        unsigned short fan_on : 1;            //15
+
+    }MW10;
+
+    //ModbusµØÖ·40012
+    struct Move
+    {
+        unsigned short ZÖá»ØÔ­µãÖ¸Áî : 1;        //0
+        unsigned short FÖá»ØÔ­µãÖ¸Áî : 1;        //1
+        unsigned short CÖá»ØÔ­µãÖ¸Áî : 1;        //2
+        unsigned short ZÖáÔË¶¯¿ªÊ¼Ö¸Áî : 1;        //3
+        unsigned short FÖáÔË¶¯¿ªÊ¼Ö¸Áî : 1;        //4
+        unsigned short CÖáÔË¶¯¿ªÊ¼Ö¸Áî : 1;        //5
+        unsigned short unused_6_15 : 10;        //6-15, ¹²10Î»
+    }MW11;
+
+    //ModbusµØÖ·40013
+    struct
+    {
+        //MW13
+        unsigned short ´ó³äÆø·§×´Ì¬ : 1;        //0
+        unsigned short Ğ¡³äÆø·§×´Ì¬ : 1;        //1
+        unsigned short ÅÅÆø·§×´Ì¬ : 1;            //2
+        unsigned short ¼±Í£°²È«¼ÌµçÆ÷×´Ì¬ : 1;    //3
+        unsigned short Ç»ÃÅ²åµ½Î»ĞÅºÅ : 1;        //4
+        unsigned short Ç»ÃÅËøÉÏµç×´Ì¬ : 1;        //5
+        unsigned short ¼¤¹âÆ÷ÓĞµçĞÅºÅ: 1;        //6
+        unsigned short ·ç»úÓĞµçĞÅºÅ: 1;            //7
+        unsigned short µç»úÓĞµçĞÅºÅ : 1;        //8
+        //MW14    
+        unsigned short ZÖáÔ­µã±êÖ¾ : 1;            //9
+        unsigned short FÖáÔ­µã±êÖ¾ : 1;            //10
+        unsigned short CÖáÔ­µã±êÖ¾ : 1;            //11
+        //
+        unsigned short unused_12_15 : 4;        //µÚ12Î»ÖÁµÚ15Î»£¬¹²¼Æ4Î»
+    }MW13_MW14; 
+
+    //ModbusµØÖ·40014
+    struct 
+    {
+        unsigned short ¼¤¹âÆ÷±¨¾¯ : 1;            //0
+        unsigned short ·ç»ú±¨¾¯ : 1;            //1
+        unsigned short unused_2_15 : 14;        //µÚ2Î»µ½µÚ15Î»£¬¹²¼Æ14Î»
+    }MW12;
+
+
+    //ModbusµØÖ·40015
+    struct
+    {
+        unsigned short ZÖáÇı¶¯Æ÷±¨¾¯: 1;        //0
+        unsigned short ZÖáÔË¶¯³¬Ê±±¨¾¯ : 1;        //1
+        unsigned short FÖáÇı¶¯Æ÷±¨¾¯ : 1;        //2
+        unsigned short FÖáÔË¶¯³¬Ê±±¨¾¯ : 1;        //3
+        unsigned short CÖáÇı¶¯Æ÷±¨¾¯ : 1;        //4
+        unsigned short CÖáÔË¶¯³¬Ê±±¨¾¯ : 1;        //5
+        unsigned short ZÖáÕıÏŞÎ» : 1;            //6
+        unsigned short FÖáÕıÏŞÎ» : 1;            //7
+        unsigned short CÖáÕıÏŞÎ» : 1;            //8
+        unsigned short ZÖá¸ºÏŞÎ» : 1;            //9
+        unsigned short FÖá¸ºÏŞÎ» : 1;            //10
+        unsigned short CÖá¸ºÏŞÎ» : 1;            //11
+        unsigned short ZÖáÔË¶¯½áÊøĞÅºÅ : 1;        //12
+        unsigned short FÖáÔË¶¯½áÊøĞÅºÅ : 1;        //13
+        unsigned short CÖáÔË¶¯½áÊøĞÅºÅ : 1;            //14
+        unsigned short ÆÌ·Ûµ½Î» : 1;                //15
+
+    }MW12_12_14;
+
+    //ModbusµØÖ·40016
+    struct {
+        unsigned short ZÖáÔË¶¯Í£Ö¹ĞÅºÅ : 1;        //0
+        unsigned short FÖáÔË¶¯Í£Ö¹ĞÅºÅ : 1;        //1
+        unsigned short CÖáÔË¶¯Í£Ö¹ĞÅºÅ : 1;        //2
+        unsigned short unused_3_15 : 13;        //µÚ3Î»µ½µÚ15Î»£¬¹²¼Æ13Î»
+    }STOP;
+    //MobusµØÖ·40017-40020
+    MB_Reg unused_17_20[4];
+
+    //MobusµØÖ·40021-40038
+    MB_DINT ZÖá¼ÓËÙ¶È;
+    MB_DINT ZÖáÔË¶¯ËÙ¶È;
+    MB_DINT ZÖáÒÆ¶¯¾àÀë;
+
+    MB_DINT FÖá¼ÓËÙ¶È;
+    MB_DINT FÖáÔË¶¯ËÙ¶È;
+    MB_DINT FÖáÒÆ¶¯¾àÀë;
+
+    MB_DINT CÖá¼ÓËÙ¶È;
+    MB_DINT CÖáÔË¶¯ËÙ¶È;
+    MB_DINT CÖáÒÆ¶¯¾àÀë;
+
+
+    //ModbusµØÖ·40039-40040
+    MB_INT unused_39_40[2];
+
+    //ModbusµØÖ·40041-40043
+    MB_INT ·çÑ¹Éè¶¨Öµ;
+    MB_INT Ñ¹Á¦Ô¤¾¯Éè¶¨Öµ;
+    MB_INT Ñ¹Á¦±¨¾¯Éè¶¨Öµ;
+
+    //ModbusµØÖ·40044-40050
+    MB_Reg usused44_50[7];
+
+    //ModbusµØÖ·40051-40054
+    MB_INT Ñõº¬Á¿µÍ¾«¶È;
+    MB_INT Ñõº¬Á¿¸ß¾«¶È;
+    MB_INT ·çÑ¹Êµ¼ÊÖµ;
+    MB_INT Ç»ÌåÑ¹Á¦;
+
+    //ModbusµØÖ·40055-40060
+    MB_Reg usused55_60[6];
+
+    //ModbusµØÖ·40061-40066
+    MB_DINT ZÖáµ±Ç°Î»ÖÃ;
+    MB_DINT FÖáµ±Ç°Î»ÖÃ;
+    MB_DINT CÖáµ±Ç°Î»ÖÃ;
+
+};
+#pragma pack(pop)
+
+// Define instances
+CharmRayPlcRegs out_data;
+CharmRayPlcRegs MyData;
+
+
 void Config_innitial() //¶ÁÈ¡jsonÅäÖÃÎÄ¼ş²¢¸³Öµ¸øÈ«¾Ö±äÁ¿global_config
 {
 	std::ifstream file("config.json");
 	global_config = json::parse(file);
 	file.close();
+
+	// Initialize MyData and out_data from configuration if keys exist.
+	// For array-like registers the config uses a scalar default; fill all elements with that value.
+
+
+	MyData.ZÖá¼ÓËÙ¶È = global_config.value("ZÖá¼ÓËÙ¶È", 0);
+	MyData.ZÖáÔË¶¯ËÙ¶È = global_config.value("ZÖáÔË¶¯ËÙ¶È", 0);
+	MyData.ZÖáÒÆ¶¯¾àÀë = global_config.value("ZÖáÒÆ¶¯¾àÀë", 0);
+
+	MyData.FÖá¼ÓËÙ¶È = global_config.value("FÖá¼ÓËÙ¶È", 0);
+	MyData.FÖáÔË¶¯ËÙ¶È = global_config.value("FÖáÔË¶¯ËÙ¶È", 0);
+	MyData.FÖáÒÆ¶¯¾àÀë = global_config.value("FÖáÒÆ¶¯¾àÀë", 0);
+
+	MyData.CÖá¼ÓËÙ¶È = global_config.value("CÖá¼ÓËÙ¶È", 0);
+	MyData.CÖáÔË¶¯ËÙ¶È = global_config.value("CÖáÔË¶¯ËÙ¶È", 0);
+	MyData.CÖáÒÆ¶¯¾àÀë = global_config.value("CÖáÒÆ¶¯¾àÀë", 0);
+
+	MyData.·çÑ¹Éè¶¨Öµ = global_config.value("·çÑ¹Éè¶¨Öµ", 0);
+	MyData.Ñ¹Á¦Ô¤¾¯Éè¶¨Öµ = global_config.value("Ñ¹Á¦Ô¤¾¯Éè¶¨Öµ", 0);
+	MyData.Ñ¹Á¦±¨¾¯Éè¶¨Öµ = global_config.value("Ñ¹Á¦±¨¾¯Éè¶¨Öµ", 0);
+
+	MyData.Ñõº¬Á¿µÍ¾«¶È = global_config.value("Ñõº¬Á¿µÍ¾«¶È", 0);
+	MyData.Ñõº¬Á¿¸ß¾«¶È = global_config.value("Ñõº¬Á¿¸ß¾«¶È", 0);
+	MyData.·çÑ¹Êµ¼ÊÖµ = global_config.value("·çÑ¹Êµ¼ÊÖµ", 0);
+	MyData.Ç»ÌåÑ¹Á¦ = global_config.value("Ç»ÌåÑ¹Á¦", 0);
+
+	MyData.ZÖáµ±Ç°Î»ÖÃ = global_config.value("ZÖáµ±Ç°Î»ÖÃ", 0);
+	MyData.FÖáµ±Ç°Î»ÖÃ = global_config.value("FÖáµ±Ç°Î»ÖÃ", 0);
+	MyData.CÖáµ±Ç°Î»ÖÃ = global_config.value("CÖáµ±Ç°Î»ÖÃ", 0);
+
+	// Initialize out_data from same defaults as MyData so writes have sensible defaults
+
 }
+
+
+// Motor ratios (default values)
+float Motor_ratio[3] = { 5000.0f, 5000.0f, 95.2f };
+
+
 
 template<typename T>
 void Config_set(const std::string& group, const std::string& key, const T& value)
@@ -42,6 +249,7 @@ void Config_set(const std::string& key, const T& value)
 {
 	global_config[key] = value;//ÖØÔØº¯Êı£¬Éú²ú¹ı³Ì¸üĞÂglobal_config
 }
+
 
 void ModbusInitial()//³õÊ¼»¯º¯Êı
 {
@@ -73,9 +281,8 @@ void ModbusInitial()//³õÊ¼»¯º¯Êı
 	r = modbus_write_registers(rtu_var_, 10, 2, (uint16_t*)&initial);//ÓÃÖ¸ÕëÇ¿×ª16Î»
 	if (r == -1) { cout << "Initial error" << endl;; }
 
-//¸ù¾İÅäÖÃÎÄ¼ş³õÊ¼»¯Z_F_C·½ÏòÔË¶¯²ÎÊı£¬µ¥Î»mmºÍs
-
-    Z_Move_Distance = global_config["Z_Move_Distance"].get<float>();
+	//´ÓÅäÖÃÎÄ¼ş¶ÁÈ¡ÔË¶¯¿ØÖÆ²ÎÊı	
+	Z_Move_Distance = global_config["Z_Move_Distance"].get<float>();
 	Z_Accelerate = global_config["Z_Accelerate"].get<float>();
 	Z_Velocity = global_config["Z_Velocity"].get<float>();
 
@@ -86,10 +293,6 @@ void ModbusInitial()//³õÊ¼»¯º¯Êı
 	C_Move_Distance = global_config["C_Move_Distance"].get<float>();
 	C_Accelerate = global_config["C_Accelerate"].get<float>();
 	C_Velocity = global_config["C_Velocity"].get<float>();
-
-	for (int i = 0; i < 3; ++i) {//³õÊ¼»¯Motor_ratiosÊı×é
-	Motor_ratio[i] = global_config["Motor_ratio"][i].get<float>();
-	}
 
 	out_data.ZÖá¼ÓËÙ¶È = Z_Accelerate * Motor_ratio[Z];
 	out_data.ZÖáÔË¶¯ËÙ¶È = Z_Velocity * Motor_ratio[Z];
@@ -119,13 +322,7 @@ void ModbusTaskPush(Rs422& rs422) {//°ÑÒ»¸ö Modbus Í¨ĞÅÈÎÎñ·ÅÈë¶ÓÁĞ£¬²¢Í¨ÖªÏû·ÑÕ
 	}
 	ModbusQueueCondVar.notify_one();
 }
-void taskPush(FunCode& funcode) {//ºÍÉÏÃæÍêÈ«Ò»Ñù£¬Ö»ÊÇ¶ÓÁĞÃûºÍÊı¾İÀàĞÍ²»Í¬¡£·ÅÈëµÄÊÇ FunCode£¨¹¦ÄÜÂë£©
-	{
-		lock_guard<std::mutex> lg1(task_mtx);
-		task.push(funcode);
-	}
-	queueCondVar.notify_one();
-}
+
 CharmRayPlcRegs& get() {//¶ÁÊı¾İ
 	shared_lock<shared_mutex>lck(mutex_);
 	return MyData;
@@ -168,9 +365,9 @@ void Z_F_move(float Z_distance, float F_distance) {//ZÖáºÍFÖáÁª¶¯ÒÆ¶¯º¯Êı£¬ZÖáÄ¿
 	while (count < 100) {
 		count++;
 		if (count == 1)
-			this_thread::sleep_for(chrono::milliseconds(500));
+			this_thread::sleep_for(chrono::milliseconds(global_config["First_time_delay"].get<int>()));
 		else
-			this_thread::sleep_for(chrono::milliseconds(10));
+			this_thread::sleep_for(chrono::milliseconds(global_config["Normal_delay"].get<int>()));
 		if (get().MW12_12_14.FÖáÔË¶¯½áÊøĞÅºÅ == 1) {
 			out_data.MW11.ZÖáÔË¶¯¿ªÊ¼Ö¸Áî = 0;
 			out_data.MW11.FÖáÔË¶¯¿ªÊ¼Ö¸Áî = 0;
@@ -220,9 +417,9 @@ void Axis_Move(Axis axis, float distance) {
 		count++;	//µÚÒ»´ÎsleepÊ±¼ä´óÒ»Ğ©
 
 		if (count == 1)
-			this_thread::sleep_for(chrono::milliseconds(500));
+			this_thread::sleep_for(chrono::milliseconds(global_config["First_time_delay"].get<int>()));
 		else
-			this_thread::sleep_for(chrono::milliseconds(10));//¶Áµ½¾ÉÖµºÜ¿ÉÅÂ
+			this_thread::sleep_for(chrono::milliseconds(global_config["Normal_delay"].get<int>()));//¶Áµ½¾ÉÖµºÜ¿ÉÅÂ
 		bool moveStopFlag = (*(uint16_t*)(&get().MW12_12_14) & (1 << (12 + axis))) >> (12 + axis);
 		//if (((*(uint16_t*)( &get().MW12_12_14)  &  (1 << (axis + 12)) )>> 12)== 1) {//Õâ¾ä»°you'wen'ti
 		if (moveStopFlag == 1) {
@@ -284,10 +481,11 @@ void Modbus() {//¸ºÔğ´¦ÀíËùÓĞModbusÍ¨ĞÅ,ºËĞÄ
 			}
 			break;
 		}
-			  //ÖØÊÔÊ§°ÜÖ»Êä³ö´íÎó£¬²»±ÀÀ£
-		}
-
-	}
-
+                  //ÖØÊÔÊ§°ÜÖ»Êä³ö´íÎó£¬²»±ÀÀ£
+        }
+        // end switch
+    }
+    // end while
 
 }
+// end Modbus
