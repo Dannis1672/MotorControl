@@ -443,6 +443,23 @@ void Axis_Move(Axis axis, float distance) {
 
 }
 
+void Light_switch() {
+
+	string state;
+	bool on = (state == "on");
+
+	out_data.MW10.light = on;
+	out_data.MW10.red_light = on;
+	out_data.MW10.greeen_light = on;
+	out_data.MW10.blue_light = on;
+
+	Rs422 rs422;
+
+	rs422.change(1, 10, 1, (uint16_t*)&out_data.MW10);
+	ModbusTaskPush(rs422);
+	cout << "全部灯光 " << state << endl;
+}
+
 void Modbus() {//负责处理所有Modbus通信,核心
 	Rs422 rs;//局部变量rs
 	while (true) {//无限循环，确保函数持续运行不会退出

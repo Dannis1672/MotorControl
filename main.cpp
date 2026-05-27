@@ -31,7 +31,14 @@ int main() {
             iss >> z >> f;
             Z_F_move(z, f);
             cout << "执行Z_F_move完成" << endl;
-        }}
+        }},
+
+        {"Light_switch", [](istringstream& iss) {
+            cout << "正在执行Light_switch" << endl;
+            Light_switch();
+            cout << "执行Light_switch完成" << endl;
+}
+}
 
 
     };

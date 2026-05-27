@@ -73,6 +73,8 @@ void ModbusTaskPush(Rs422&);
 void ReadRegister();
 void Z_F_move(float, float);
 void Axis_Move(Axis, float);
+void Light_switch() {};
 void Modbus();
+
 CharmRayPlcRegs& get();
 CharmRayPlcRegs* write();
