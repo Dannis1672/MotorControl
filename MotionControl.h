@@ -1,8 +1,9 @@
-#ifndef CONTROL_H
-#define CONTROL_H
+#ifndef MOTIONCONTROL_H
+#define MOTIONCONTROL_H
 
 #include "json.hpp"
 
+#include "StreamProcessor.h"
 #define CONTROL_NAMESAPCE_BEGIN namespace MotionControl{
 #define CONTROL_NAMESAPCE_END };
 
@@ -82,6 +83,13 @@ public:
 	virtual void ProcessBegin() = 0;
 	virtual void ProcessFinish() = 0;
 
+	//流的处理
+	void AddStreamListener(ExceptionLevel level, std::function<void(const std::string&)>msgCallback){
+		stream.onCallback(level,msgCallback);
+	}
+
+protected:
+	StreamProcessor stream;
 };
 
 CONTROL_NAMESAPCE_END

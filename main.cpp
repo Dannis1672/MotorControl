@@ -1,14 +1,19 @@
-﻿#include <iostream>
+#include <iostream>
 #include <string>
 #include <sstream>
 #include <thread>
 #include <map>
 #include <functional>
 #include "ChuangRui_Control.h"
+#include <windows.h>
 
 using namespace std;
 
 int main() {
+    //设置控制台编码为UTF-8
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+
     ChuangRui_Control ctrl;
     try {
     ctrl.ControlInitial();
@@ -16,19 +21,22 @@ int main() {
    thread modbus_thread(Modbus);
    thread read_thread(ReadRegister);
 
-    map<string, function<void(istringstream&)>> commands = 
+   ctrl.AddStreamListener(ExceptionLevel::Error, [](const std::string& s) {
+       std::cout << s << std::endl;
+   });
+    map<string, function<void(istringstream&)>> commands =
     {//命令映射表
         {"AxisMove", [&ctrl](istringstream& iss) {
             cout << "正在执行Axis_Move" << endl;
             string ax; float d;
             iss >> ax >> d;
-            ctrl.ChuangRui_Control::AxisMove(ax == "Z" ? Z : ax == "F" ? F : C, d);
+            ctrl.AxisMove(ax == "Z" ? Z : ax == "F" ? F : C, d);
             cout << "执行Axis_Move完成" << endl;
         }}
 
-    
+
     };
-	{//测试代码，一次只执行一条操作，输入exit退出测试    
+	{//测试代码，一次只执行一条操作，输入exit退出测试
     cout << "===== 测试开始 =====" << endl;
     string line;
     while (getline(cin, line))
@@ -39,8 +47,8 @@ int main() {
 
 
         if (line == "exit") break;
-       
-        else 
+
+        else
         {
             istringstream iss(line);
             string cmd;
@@ -74,6 +82,3 @@ int main() {
     return 0;
 
  }
-
-
-    
