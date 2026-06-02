@@ -35,8 +35,8 @@
   },
 
   "Motor_ratio_Z": 5000.0,
-  "Motor_ratio_F": 5000.0 ,
-  "Motor_ratio_C": 95.2 ,
+  "Motor_ratio_F": 5000.0,
+  "Motor_ratio_C": 95.2,
 
   "Z_Move_Distance": 0.5,
   "Z_Accelerate": 12.0,
@@ -53,6 +53,17 @@
   "ReadInterval": 200,
 
   "First_time_delay": 500,
-  "Normal_delay": 10
+  "Normal_delay": 10,
 
+
+  "m_stepRatio": 5882,
+  
+  "HalfPeriod": 640,
+  "PulseLength": 1275,
+  
+  "LaserOnDelay": 1400,
+  "LaserOffDelay": 1600,
+
+  "JumpSpeed": 17646,
+  "MarkSpeed": 5882
 }

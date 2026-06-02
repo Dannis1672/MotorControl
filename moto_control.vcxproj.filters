@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="control.cpp">
+    <ClCompile Include="ChuangRui_Control.cpp">
       <Filter>control</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
@@ -23,13 +23,16 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="control.h">
+    <ClInclude Include="MotionControl.h">
       <Filter>control</Filter>
     </ClInclude>
     <ClInclude Include="json.hpp">
       <Filter>control</Filter>
     </ClInclude>
     <ClInclude Include="modbus.h">
+      <Filter>control</Filter>
+    </ClInclude>
+    <ClInclude Include="ChuangRui_Control.h">
       <Filter>control</Filter>
     </ClInclude>
   </ItemGroup>

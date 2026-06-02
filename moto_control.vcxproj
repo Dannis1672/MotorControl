@@ -135,13 +135,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="control.cpp" />
+    <ClCompile Include="ChuangRui_Control.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="control.h" />
+    <ClInclude Include="MotionControl.h" />
     <ClInclude Include="json.hpp" />
     <ClInclude Include="modbus.h" />
+    <ClInclude Include="ChuangRui_Control.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="config.json" />

@@ -1,56 +1,45 @@
-#include <iostream>
+Ôªø#include <iostream>
 #include <string>
 #include <sstream>
 #include <thread>
 #include <map>
 #include <functional>
-#include "control.h"
+#include "ChuangRui_Control.h"
+
 using namespace std;
 
 int main() {
+    ChuangRui_Control ctrl;
+    try {
+    ctrl.ControlInitial();
 
-    Config_innitial();
-    ModbusInitial();
-
-   // thread modbus_thread(Modbus);
-   //thread read_thread(ReadRegister);
+   thread modbus_thread(Modbus);
+   thread read_thread(ReadRegister);
 
     map<string, function<void(istringstream&)>> commands = 
-    {//√¸¡Ó”≥…‰±Ì
-        {"Axis_Move", [](istringstream& iss) {
-            cout << "’˝‘⁄÷¥––Axis_Move" << endl;
+    {//ÂëΩ‰ª§Êò†Â∞ÑË°®
+        {"AxisMove", [&ctrl](istringstream& iss) {
+            cout << "Ê≠£Âú®ÊâßË°åAxis_Move" << endl;
             string ax; float d;
             iss >> ax >> d;
-            Axis_Move(ax == "Z" ? Z : ax == "F" ? F : C, d);
-            cout << "÷¥––Axis_MoveÕÍ≥…" << endl;
-        }},
+            ctrl.ChuangRui_Control::AxisMove(ax == "Z" ? Z : ax == "F" ? F : C, d);
+            cout << "ÊâßË°åAxis_MoveÂÆåÊàê" << endl;
+        }}
 
-        {"Z_F_move", [](istringstream& iss) {
-            cout << "’˝‘⁄÷¥––Z_F_move" << endl;
-            float z, f;
-            iss >> z >> f;
-            Z_F_move(z, f);
-            cout << "÷¥––Z_F_moveÕÍ≥…" << endl;
-        }},
-
-        {"Light_switch", [](istringstream& iss) {
-            cout << "’˝‘⁄÷¥––Light_switch" << endl;
-            Light_switch();
-            cout << "÷¥––Light_switchÕÍ≥…" << endl;
-}
-}
-
-
+    
     };
-
-
-
-    {//≤‚ ‘¥˙¬Î£¨“ª¥Œ÷ª÷¥––“ªÃı“∆∂Ø∫Ø ˝
-    cout << "===== ≤‚ ‘ø™ º =====" << endl;
+	{//ÊµãËØï‰ª£Á†ÅÔºå‰∏ÄÊ¨°Âè™ÊâßË°å‰∏ÄÊù°Êìç‰ΩúÔºåËæìÂÖ•exitÈÄÄÂá∫ÊµãËØï    
+    cout << "===== ÊµãËØïÂºÄÂßã =====" << endl;
     string line;
     while (getline(cin, line))
     {
+
+
+
+
+
         if (line == "exit") break;
+       
         else 
         {
             istringstream iss(line);
@@ -60,17 +49,27 @@ int main() {
             if (it != commands.end()) {
                 it->second(iss);
             } else {
-                cout << "Œ¥÷™√¸¡Ó: " << cmd << endl;
+                cout << "Êú™Áü•ÂëΩ‰ª§: " << cmd << endl;
             }
         }
         }
     };
 
 
+//Á§∫‰æãÔºöÁî®Êà∑ËæìÂÖ•: "Z_F_move 20 20"   ----->   Z_F_move(20, 20)
+    cout << "===== ÊµãËØïÂÆåÊàê =====" << endl;
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Unhandled exception: " << e.what() << std::endl;
+    }
+    catch (...) {
+        std::cerr << "Unhandled unknown exception" << std::endl;
+    }
 
-// æ¿˝£∫”√ªß ‰»Î: "Z_F_move 20 20"   ----->   Z_F_move(20, 20)
-    cout << "===== ≤‚ ‘ÕÍ≥… =====" << endl;
-
+    // Prevent console from closing immediately when the exe is started by double-click
+    cout << "Press Enter to exit..." << endl;
+    string _s;
+    getline(cin, _s);
 
     return 0;
 
