@@ -4,15 +4,22 @@
 #include <thread>
 #include <map>
 #include <functional>
-#include "ChuangRui_Control.h"
-#include <windows.h>
-
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include "control/ChuangRui_Control.h"
+#include <Windows.h>
 using namespace std;
 
 int main() {
-    //设置控制台编码为UTF-8
+    // 设置控制台输出为 UTF-8
     SetConsoleOutputCP(CP_UTF8);
+    // 设置控制台输入为 UTF-8（可选）
     SetConsoleCP(CP_UTF8);
+
+
+    auto console = spdlog::stdout_color_mt("console");
+    spdlog::set_default_logger(console);
+    spdlog::set_level(spdlog::level::debug);
 
     ChuangRui_Control ctrl;
     try {
@@ -21,23 +28,20 @@ int main() {
    thread modbus_thread(Modbus);
    thread read_thread(ReadRegister);
 
-   ctrl.AddStreamListener(ExceptionLevel::Error, [](const std::string& s) {
-       std::cout << s << std::endl;
-   });
     map<string, function<void(istringstream&)>> commands =
     {//命令映射表
         {"AxisMove", [&ctrl](istringstream& iss) {
-            cout << "正在执行Axis_Move" << endl;
+            spdlog::info("正在执行Axis_Move");
             string ax; float d;
             iss >> ax >> d;
             ctrl.AxisMove(ax == "Z" ? Z : ax == "F" ? F : C, d);
-            cout << "执行Axis_Move完成" << endl;
+            spdlog::info("执行Axis_Move完成");
         }}
 
 
     };
 	{//测试代码，一次只执行一条操作，输入exit退出测试
-    cout << "===== 测试开始 =====" << endl;
+    spdlog::info("===== 测试开始 =====");
     string line;
     while (getline(cin, line))
     {
@@ -57,24 +61,22 @@ int main() {
             if (it != commands.end()) {
                 it->second(iss);
             } else {
-                cout << "未知命令: " << cmd << endl;
+                spdlog::warn("未知命令: {}", cmd);
             }
         }
         }
     };
 
 
-//示例：用户输入: "Z_F_move 20 20"   ----->   Z_F_move(20, 20)
-    cout << "===== 测试完成 =====" << endl;
+    spdlog::info("===== 测试完成 =====");
     }
     catch (const std::exception& e) {
-        std::cerr << "Unhandled exception: " << e.what() << std::endl;
+        spdlog::critical("Unhandled exception: {}", e.what());
     }
     catch (...) {
-        std::cerr << "Unhandled unknown exception" << std::endl;
+        spdlog::critical("Unhandled unknown exception");
     }
 
-    // Prevent console from closing immediately when the exe is started by double-click
     cout << "Press Enter to exit..." << endl;
     string _s;
     getline(cin, _s);

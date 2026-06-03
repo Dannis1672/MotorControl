@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "MotionControl.h"
+#include "control/MotionControl.h"
 
 
 using namespace MotionControl;

@@ -3,7 +3,6 @@
 
 #include "json.hpp"
 
-#include "StreamProcessor.h"
 #define CONTROL_NAMESAPCE_BEGIN namespace MotionControl{
 #define CONTROL_NAMESAPCE_END };
 
@@ -82,14 +81,6 @@ public:
 	virtual bool IsFeed(float zd, float fup) = 0;
 	virtual void ProcessBegin() = 0;
 	virtual void ProcessFinish() = 0;
-
-	//流的处理
-	void AddStreamListener(ExceptionLevel level, std::function<void(const std::string&)>msgCallback){
-		stream.onCallback(level,msgCallback);
-	}
-
-protected:
-	StreamProcessor stream;
 };
 
 CONTROL_NAMESAPCE_END

@@ -6,10 +6,11 @@
 #include<fstream>
 #include<iostream>
 #include<queue>
+#include <spdlog/spdlog.h>
 #include<modbus.h>
 #include"json.hpp"
-#include"MotionControl.h"
-#include"ChuangRui_Control.h"
+#include"control/MotionControl.h"
+#include"control/ChuangRui_Control.h"
 
 
 using namespace std;
@@ -209,11 +210,11 @@ struct CharmRayPlcRegs
 CharmRayPlcRegs out_data;
 CharmRayPlcRegs MyData;
 float Motor_ratio[3] = { 5000.0f, 5000.0f, 95.2f };
-static StreamProcessor* g_stream = nullptr;
+
 
 Result ChuangRui_Control::ControlInitial()//初始化函数
 {
-	g_stream = &stream;
+
 	std::ifstream file("config.json");
 	global_config = json::parse(file);
 	file.close();
@@ -262,11 +263,11 @@ Result ChuangRui_Control::ControlInitial()//初始化函数
 
 	//设置从站
 	int r = modbus_set_slave(rtu_var_, 1);
-	if (r == -1) { stream.push(ExceptionLevel::Error,"Modbus_set_slave error");}
+	if (r == -1) { spdlog::error("Modbus_set_slave error");}
 
 	//打开串口，建立物理连接
 	r = modbus_connect(rtu_var_);
-	if (r == -1) { stream.push(ExceptionLevel::Error, "Modbus_connect error"); }
+	if (r == -1) { spdlog::error("Modbus_connect error"); }
 
 	//主站发送完请求后，等待从站回复的最长时间 100 毫秒
 	modbus_set_byte_timeout(rtu_var_, 0, 100000);
@@ -274,7 +275,7 @@ Result ChuangRui_Control::ControlInitial()//初始化函数
 	//这行是在准备要写入的数据
 	unsigned int initial = 0;
 	r = modbus_write_registers(rtu_var_, 10, 2, (uint16_t*)&initial);//用指针强转16位
-	if (r == -1) { stream.push(ExceptionLevel::Error, "Initial error"); }
+	if (r == -1) { spdlog::error("Initial error"); }
 
 	//从配置文件读取运动控制参数	
 	Z_Move_Distance = global_config["Z_Move_Distance"].get<float>();
@@ -433,7 +434,7 @@ Result ChuangRui_Control::AxisMove(Axis axis, float distance) {//用于传参
 		}
 	}
 	if (count == timeout) {
-		stream.push(ExceptionLevel::Warning, "AxisMove timeout, axis=" + std::to_string(static_cast<int>(axis)));
+		spdlog::warn("AxisMove timeout, axis={}", static_cast<int>(axis));
 		return Result::Failure;
 	}
 	return Result::Success;
@@ -462,7 +463,7 @@ Result ChuangRui_Control::AxisToZero(Axis axis) {	// 设置回原点指令位
 		}
 	}
 	if (count == 6000) {
-		stream.push(ExceptionLevel::Warning, "AxisToZero timeout, axis=" + std::to_string(static_cast<int>(axis)));
+		spdlog::warn("AxisToZero timeout, axis={}", static_cast<int>(axis));
 		return Result::Failure;
 	}
 	return Result::Success;
@@ -585,7 +586,7 @@ Result ChuangRui_Control::WriteBit(UIButton io, bool value) {//设置对应参�
 		break;
 
 	default:
-		stream.push(ExceptionLevel::Warning, "WriteBit: 未知按钮 " + std::to_string(static_cast<int>(io)));
+		spdlog::warn("WriteBit: 未知按钮 {}", static_cast<int>(io));
 		return Result::Failure;
 	}
 
@@ -647,7 +648,7 @@ Result ChuangRui_Control::WriteFloat(UIFloat param, float value) {//环境参数
 
 		//  9: Test
 	case UIFloat::Test:
-		stream.push(ExceptionLevel::Debug, "WriteFloat Test: " + std::to_string(value));
+		spdlog::debug("WriteFloat Test: {}", value);
 		return Result::Success;
 
 	default:
@@ -664,7 +665,7 @@ bool ChuangRui_Control::IsFeed(float zd, float fup) {
 };
 void ChuangRui_Control::ProcessBegin() {
 	Rs422 rs422;
-	stream.push(ExceptionLevel::Info, "加工开始");
+	spdlog::info("加工开始");
 	//打开激光使能
 	out_data.MW10.lase_power = 1;
 	//打开电机电源
@@ -674,7 +675,7 @@ void ChuangRui_Control::ProcessBegin() {
 	ModbusTaskPush(rs422);
 };
 void ChuangRui_Control::ProcessFinish() {
-	stream.push(ExceptionLevel::Info, "加工结束");
+	spdlog::info("加工结束");
 	// 关闭激光
 	out_data.MW10.laser_on = 0;
 	//关闭使能
@@ -807,9 +808,9 @@ void Modbus() {//负责处理所有Modbus通信,核心
 			if (ret == -1) {
 				this_thread::sleep_for(chrono::milliseconds(100)); //如果失败，当前线程休眠100毫秒,等待总线稳定或PLC准备好
 				ret = modbus_read_registers(rtu_var_, rs.address, rs.number, rs.dest); //使用相同的参数重新调用Modbus读函数
-				if (ret == -1 && g_stream)
-					g_stream->push(ExceptionLevel::Error,
-						"modbus read error: addr=" + std::to_string(rs.address) + ", num=" + std::to_string(rs.number));
+				if (ret == -1)
+					spdlog::error(
+						"modbus read error: addr={}, num={}", rs.address, rs.number);
 			}
 			break;
 		}
@@ -818,9 +819,9 @@ void Modbus() {//负责处理所有Modbus通信,核心
 			if (ret == -1) {
 				this_thread::sleep_for(chrono::milliseconds(100));
 				ret = modbus_write_registers(rtu_var_, rs.address, rs.number, rs.dest);
-				if (ret == -1 && g_stream)
-					g_stream->push(ExceptionLevel::Error,
-						"modbus write error: addr=" + std::to_string(rs.address) + ", num=" + std::to_string(rs.number));
+				if (ret == -1)
+					spdlog::error(
+						"modbus write error: addr={}, num={}", rs.address, rs.number);
 			}
 			break;
 		}
