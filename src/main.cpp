@@ -22,11 +22,10 @@ int main() {
     spdlog::set_level(spdlog::level::debug);
 
     ChuangRui_Control ctrl;
-    try {
-    ctrl.ControlInitial();
 
-   thread modbus_thread(Modbus);
-   thread read_thread(ReadRegister);
+    try {
+
+    ctrl.ControlInitial();
 
     map<string, function<void(istringstream&)>> commands =
     {//命令映射表
@@ -34,12 +33,17 @@ int main() {
             spdlog::info("正在执行Axis_Move");
             string ax; float d;
             iss >> ax >> d;
-            ctrl.AxisMove(ax == "Z" ? Z : ax == "F" ? F : C, d);
+
+            ctrl.AxisMove(ax == "Z" ? MotionControl::Z : ax == "F" ? MotionControl::F : MotionControl::C, d);
             spdlog::info("执行Axis_Move完成");
+
+
         }}
 
 
     };
+
+
 	{//测试代码，一次只执行一条操作，输入exit退出测试
     spdlog::info("===== 测试开始 =====");
     string line;
