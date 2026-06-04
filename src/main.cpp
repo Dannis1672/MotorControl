@@ -1,11 +1,11 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <sstream>
 #include <thread>
 #include <map>
 #include <functional>
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include "moto_log.h"
 #include "control/ChuangRui_Control.h"
 #include <Windows.h>
 using namespace std;
@@ -17,9 +17,17 @@ int main() {
     SetConsoleCP(CP_UTF8);
 
 
-    auto console = spdlog::stdout_color_mt("console");
-    spdlog::set_default_logger(console);
-    spdlog::set_level(spdlog::level::debug);
+    // 加载配置文件，初始化日志系统
+    {
+        std::ifstream log_cfg_file("config.json");
+        if (log_cfg_file.is_open()) {
+            auto cfg = nlohmann::json::parse(log_cfg_file);
+            moto::log::init(cfg);
+        } else {
+            // config.json 不存在时使用全默认值（仅控制台输出）
+            moto::log::init(nlohmann::json{});
+        }
+    }
 
     ChuangRui_Control ctrl;
 
@@ -34,7 +42,7 @@ int main() {
             string ax; float d;
             iss >> ax >> d;
 
-            ctrl.AxisMove(ax == "Z" ? MotionControl::Z : ax == "F" ? MotionControl::F : MotionControl::C, d);
+            ctrl.AxisMoveAnsyc(ax == "Z" ? MotionControl::Z : ax == "F" ? MotionControl::F : MotionControl::C, d);
             spdlog::info("执行Axis_Move完成");
 
 

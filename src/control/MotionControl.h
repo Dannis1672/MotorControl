@@ -73,7 +73,7 @@ public:
 
 
 	//异步指令
-	virtual Result AxisMove(Axis axis, float distance,bool wait) = 0;
+	virtual Result AxisMoveAnsyc(Axis axis, float distance) = 0;
 	virtual Result AxisToZero(Axis axis) = 0;
 	virtual Result  AxisStop(Axis axis) = 0;
 

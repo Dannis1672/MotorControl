@@ -40,8 +40,6 @@ add_executable(moto_control
     src/control/ChuangRui_Control.cpp
     src/control/ChuangRui_Control.h
     src/control/MotionControl.h
-    include/modbus.h
-    include/json.hpp
 )
 target_include_directories(moto_control PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -61,3 +59,23 @@ if(MSVC)
     target_compile_options(moto_control PRIVATE /utf-8)
     target_compile_options(modbus PRIVATE /utf-8)
 endif()
+
+# ── Packaging (CPack + WiX MSI) ──────────────────────
+# Install rules: these define what goes into the package
+install(TARGETS moto_control RUNTIME DESTINATION .)
+install(FILES assets/config.json DESTINATION .)
+
+# Bundle MSVC redistributable DLLs alongside the exe (not in bin/)
+set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
+include(InstallRequiredSystemLibraries)
+
+# CPack common settings
+set(CPACK_PACKAGE_NAME "moto_control")
+set(CPACK_PACKAGE_VERSION "1.0.0")
+set(CPACK_PACKAGE_VENDOR "MotorControl")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Motor Control Application")
+set(CPACK_VERBATIM_VARIABLES TRUE)
+
+set(CPACK_GENERATOR "ZIP")
+include(CPack)
+
