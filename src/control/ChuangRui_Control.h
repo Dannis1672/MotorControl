@@ -16,8 +16,8 @@ class ChuangRui_Control : public MotionControl::Control {
   Result WriteBit(MotionControl::UIButton io, bool value) override;
   Result WriteFloat(MotionControl::UIFloat param, float value) override;
   nlohmann::json GetSystemState() override;
-  Result AxisMove(MotionControl::Axis axis, float distance, bool wait = true) override;
-  Result WaitForAxesMoveComplete(MotionControl::Axis axis, float distance);
+  Result AxisMove(MotionControl::Axis axis, float distance) override;
+ 
 
   Result AxisToZero(MotionControl::Axis axis) override;
   Result AxisStop(MotionControl::Axis axis) override;
@@ -29,7 +29,7 @@ class ChuangRui_Control : public MotionControl::Control {
  private:
   void Modbus();
   void ReadRegister();
-
+  Result Z_F_Move(float zdistance, float fdistance);
   std::atomic<bool> running_{false};
   std::thread modbus_thread_;
   std::thread read_thread_;

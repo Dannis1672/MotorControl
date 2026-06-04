@@ -78,7 +78,7 @@ class Control {
   virtual nlohmann::json GetSystemState() = 0;
 
   // Asynchronous commands.
-  virtual Result AxisMove(Axis axis, float distance, bool wait) = 0;
+  virtual Result AxisMove(Axis axis, float distance) = 0;
   virtual Result AxisToZero(Axis axis) = 0;
   virtual Result AxisStop(Axis axis) = 0;
 
