@@ -8,7 +8,7 @@
 #include "moto_log.h"
 #include "control/ChuangRui_Control.h"
 #include <Windows.h>
-using namespace std;
+
 
 int main() {
     // 设置控制台输出为 UTF-8
@@ -35,14 +35,16 @@ int main() {
 
     ctrl.ControlInitial();
 
-    map<string, function<void(istringstream&)>> commands =
+    std::map<std::string, std::function<void(std::istringstream&)>> commands =
     {//命令映射表
-        {"AxisMove", [&ctrl](istringstream& iss) {
+        {"AxisMove", [&ctrl](std::istringstream& iss) {
             spdlog::info("正在执行Axis_Move");
-            string ax; float d;
+            std::string ax; float d;
             iss >> ax >> d;
 
-            ctrl.AxisMoveAnsyc(ax == "Z" ? MotionControl::Z : ax == "F" ? MotionControl::F : MotionControl::C, d);
+
+            ctrl.AxisMove(ax == "Z" ? MotionControl::Axis::Z : ax == "F" ? MotionControl::Axis::F : MotionControl::Axis::C, d);
+
             spdlog::info("执行Axis_Move完成");
 
 
@@ -54,8 +56,8 @@ int main() {
 
 	{//测试代码，一次只执行一条操作，输入exit退出测试
     spdlog::info("===== 测试开始 =====");
-    string line;
-    while (getline(cin, line))
+    std::string line;
+    while (getline(std::cin, line))
     {
 
 
@@ -66,8 +68,8 @@ int main() {
 
         else
         {
-            istringstream iss(line);
-            string cmd;
+            std::istringstream iss(line);
+            std::string cmd;
             iss >> cmd;
             auto it = commands.find(cmd);
             if (it != commands.end()) {
@@ -89,9 +91,9 @@ int main() {
         spdlog::critical("Unhandled unknown exception");
     }
 
-    cout << "Press Enter to exit..." << endl;
-    string _s;
-    getline(cin, _s);
+    std::cout << "Press Enter to exit..." << std::endl;
+    std::string _s;
+    std::getline(std::cin, _s);
 
     return 0;
 

@@ -49,9 +49,13 @@ target_link_libraries(moto_control PRIVATE modbus spdlog::spdlog)
 
 # copy config.json to output
 add_custom_command(TARGET moto_control POST_BUILD
+
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_CURRENT_SOURCE_DIR}/assets/config.json"
         "$<TARGET_FILE_DIR:moto_control>/config.json"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets/config.json"
+        "${CMAKE_CURRENT_BINARY_DIR}/config.json"
 )
 
 # MSVC: UTF-8 source encoding
