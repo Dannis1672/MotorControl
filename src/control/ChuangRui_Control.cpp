@@ -1,23 +1,24 @@
-﻿#include<chrono>
-#include<mutex>
-#include<shared_mutex>
-#include<thread>
-#include<condition_variable>
-#include<fstream>
-#include<iostream>
-#include<queue>
+﻿#include <chrono>
+#include <condition_variable>
+#include <fstream>
+#include <iostream>
+#include <mutex>
+#include <queue>
+#include <shared_mutex>
+#include <thread>
+
 #include <spdlog/spdlog.h>
-#include<modbus.h>
-#include"json.hpp"
-#include"control/MotionControl.h"
-#include"control/ChuangRui_Control.h"
+#include <modbus.h>
+
+#include "json.hpp"
+#include "control/MotionControl.h"
+#include "control/ChuangRui_Control.h"
 
 
 using json = nlohmann::json;
 
 
 using std::abs;
-using std::condition_variable;
 using std::ifstream;
 using std::lock_guard;
 using std::max;
@@ -35,9 +36,9 @@ using MotionControl::Axis;
 using MotionControl::Result;
 
 struct Rs422 {  // mode（读/写模式）、address（寄存器地址）、number（寄存器数量）、dest（数据缓冲区指针）
-  bool mode;   // 0为读，1为写
-  int address;
-  int number;
+  bool mode=0;   // 0为读，1为写
+  int address=0;
+  int number=0;
   uint16_t* dest = nullptr;  // 非拥有指针
 
   void change(bool mode_in, int address_in, int number_in, uint16_t* dest_in) {
