@@ -3,6 +3,7 @@
 #include <atomic>
 #include <thread>
 
+#include "json.hpp"
 #include "control/MotionControl.h"
 
 class ChuangRui_Control : public MotionControl::Control {
