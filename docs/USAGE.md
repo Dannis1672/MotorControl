@@ -536,10 +536,7 @@ public:
 |---|---|
 | `ModbusRetryDelayMs` | Modbus 重试间隔（毫秒） |
 | `ReadInterval` | 寄存器轮询间隔（毫秒） |
-| `m_stepRatio` | 步进比 |
-| `HalfPeriod` / `PulseLength` | 半周期/脉冲长度 |
-| `LaserOnDelay` / `LaserOffDelay` | 激光开关延时 |
-| `JumpSpeed` / `MarkSpeed` | 跳跃速度/标记速度 |
+
 
 ---
 

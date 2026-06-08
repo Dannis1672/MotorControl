@@ -84,17 +84,5 @@
   "ReadInterval": 200,
   "Long_delay": 6000,
   "First_time_delay": 500,
-  "Normal_delay": 10,
-
-
-  "m_stepRatio": 5882,
-  
-  "HalfPeriod": 640,
-  "PulseLength": 1275,
-  
-  "LaserOnDelay": 1400,
-  "LaserOffDelay": 1600,
-
-  "JumpSpeed": 17646,
-  "MarkSpeed": 5882
+  "Normal_delay": 10
 }
