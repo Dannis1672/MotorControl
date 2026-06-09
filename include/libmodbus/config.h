@@ -45,6 +45,7 @@
 #  define HAVE_LINUX_SERIAL_H     1
 #  define HAVE_NETDB_H            1
 #  define HAVE_NETINET_IN_H       1
+#  define HAVE_NETINET_IP_H       1
 #  define HAVE_NETINET_TCP_H      1
 #  define HAVE_SELECT             1
 #  define HAVE_SOCKET             1

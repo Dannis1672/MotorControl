@@ -35,6 +35,7 @@ add_library(modbus STATIC
 )
 target_include_directories(modbus PUBLIC include/libmodbus)
 target_compile_definitions(modbus PUBLIC MODBUS_STATIC)
+target_compile_definitions(modbus PRIVATE _GNU_SOURCE)
 if(WIN32)
     # Windows: Winsock for modbus TCP
     target_link_libraries(modbus PUBLIC ws2_32)
