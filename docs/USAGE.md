@@ -214,7 +214,7 @@ state
 feed <zd> <fup>
 ```
 
-检查送粉是否完成。参数 `zd` 为 Z 轴位移量，`fup` 为 F 轴上升量。返回布尔值记录在日志中。
+检查送粉是否完成。参数 `zd` 为 Z 轴下降量，`fup` 为 F 轴上升量。返回布尔值记录在日志中。
 
 ```
 feed 0.5 1.0
@@ -259,8 +259,9 @@ MotorControl/
 ├── include/
 │   ├── json.hpp              # nlohmann/json 单头文件
 │   ├── modbus.h              # libmodbus 适配头
-│   ├── moto_log.h            # spdlog 日志封装
 │   └── libmodbus/            # libmodbus 源码
+├── plugins/
+│   └── moto_log.h            # spdlog 日志封装
 ├── src/
 │   ├── main.cpp              # CLI 入口（可作为集成参考）
 │   └── control/
@@ -293,6 +294,7 @@ target_include_directories(your_app PRIVATE
 
 ```cpp
 #include <fstream>
+#include <memory>
 #include "json.hpp"
 #include "moto_log.h"
 #include "control/ChuangRui_Control.h"
@@ -305,13 +307,14 @@ int main() {
     auto cfg = cfg_file.is_open() ? json::parse(cfg_file) : json{};
     moto::log::init(cfg);
 
-    // 创建控制器实例
-    ChuangRui_Control ctrl;
-    ctrl.ControlInitial();  // 连接 Modbus，启动后台线程
+    // 通过基类指针创建控制器实例
+    std::unique_ptr<MotionControl::Control> ctrl =
+        std::make_unique<ChuangRui_Control>();
+    ctrl->ControlInitial();  // 连接 Modbus，启动后台线程
 
     // ... 你的业务逻辑 ...
 
-    ctrl.ControlFree();
+    ctrl->ControlFree();
     return 0;
 }
 ```
@@ -320,30 +323,30 @@ int main() {
 
 ```cpp
 // -- 轴运动 --
-ctrl.AxisMove(MotionControl::Axis::Z, 10.5f);     // Z轴移动 10.5
-ctrl.AxisToZero(MotionControl::Axis::F);           // F轴回零
-ctrl.AxisStop(MotionControl::Axis::C);             // 停止 C 轴
+ctrl->AxisMove(MotionControl::Axis::Z, 10.5f);     // Z轴移动 10.5
+ctrl->AxisToZero(MotionControl::Axis::F);           // F轴回零
+ctrl->AxisStop(MotionControl::Axis::C);             // 停止 C 轴
 
 // -- 数字量输出 --
-ctrl.WriteBit(MotionControl::Light, true);         // 开灯
-ctrl.WriteBit(MotionControl::Ventilate, false);    // 关排气
+ctrl->WriteBit(MotionControl::Light, true);         // 开灯
+ctrl->WriteBit(MotionControl::Ventilate, false);    // 关排气
 
 // -- 浮点参数 --
-ctrl.WriteFloat(MotionControl::OxygenRatio, 0.25f);
-ctrl.WriteFloat(MotionControl::Temperature, 180.5f);
+ctrl->WriteFloat(MotionControl::OxygenRatio, 0.25f);
+ctrl->WriteFloat(MotionControl::Temperature, 180.5f);
 
 // -- 系统状态 --
-json state = ctrl.GetSystemState();
+json state = ctrl->GetSystemState();
 float zPos = state["Z轴当前位置"];
 bool alarm = state["MW10"]["alarm"];
 
 // -- 送粉检查 --
-bool done = ctrl.IsFeed(0.5f, 1.0f);
+bool done = ctrl->IsFeed(0.5f, 1.0f);
 
 // -- 加工流程 --
-ctrl.ProcessBegin();
+ctrl->ProcessBegin();
 // ... 执行加工 ...
-ctrl.ProcessFinish();
+ctrl->ProcessFinish();
 ```
 
 ### 完整接口参考

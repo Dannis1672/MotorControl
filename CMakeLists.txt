@@ -42,6 +42,7 @@ add_executable(moto_control
     src/control/MotionControl.h
 )
 target_include_directories(moto_control PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugins
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -82,4 +83,3 @@ set(CPACK_VERBATIM_VARIABLES TRUE)
 
 set(CPACK_GENERATOR "ZIP")
 include(CPack)
-
