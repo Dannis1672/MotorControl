@@ -12,7 +12,9 @@
 #include <spdlog/spdlog.h>
 
 #include "moto_log.h"
+#ifdef _WIN32
 #include <Windows.h>
+#endif
 #include "control/ChuangRui_Control.h"
 
 using json = nlohmann::json;
@@ -355,8 +357,10 @@ void CommandLine::print_help() {
 // ============================================================
 
 int main() {
+#ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
+#endif
 
     // 加载配置并初始化日志系统
     {

@@ -8,6 +8,8 @@
 
 ## 快速开始
 
+### Windows
+
 ```powershell
 # 构建
 cmake -B build -G "Visual Studio 17 2022" -A x64
@@ -15,6 +17,23 @@ cmake --build build --config Debug
 
 # 运行
 .\build\Debug\moto_control.exe
+```
+
+### Ubuntu（22.04 / 24.04）
+
+```bash
+# 安装依赖
+sudo apt install -y build-essential cmake git
+
+# 构建
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j$(nproc)
+
+# 运行前编辑串口配置（COM2 → /dev/ttyUSB0）
+# vim assets/config.json
+
+# 运行
+./build/moto_control
 ```
 
 进入 REPL 后输入 `help` 查看所有命令。

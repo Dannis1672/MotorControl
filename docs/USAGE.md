@@ -545,14 +545,16 @@ public:
 
 ## 构建指南
 
-### 前置条件
+### Windows
 
-- Windows 10/11（目前仅支持 Windows）
+#### 前置条件
+
+- Windows 10/11
 - Visual Studio 2022（含 MSVC C++20 工具链）
 - CMake ≥ 3.20
 - Git
 
-### 构建步骤
+#### 构建步骤
 
 ```powershell
 # 克隆项目
@@ -575,11 +577,69 @@ cmake --build build --config Release
 
 配置文件 `config.json` 会自动复制到输出目录。运行前确认串口号 `COM2` 等参数与实际硬件匹配。
 
-### 打包
+#### 打包
 
 ```powershell
 # 生成 ZIP 包
 cmake --build build --config Release --target PACKAGE
+```
+
+### Ubuntu（22.04 / 24.04）
+
+#### 前置条件
+
+```bash
+# 安装编译工具链
+sudo apt update
+sudo apt install -y build-essential cmake git
+```
+
+#### 构建步骤
+
+```bash
+# 克隆项目
+git clone <repository-url>
+cd MotorControl
+
+# 配置（首次需要下载 spdlog）
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+
+# 编译
+cmake --build build -j$(nproc)
+
+# Release 构建
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+```
+
+产物位置：
+- `build/moto_control`（Debug）
+- `build/moto_control`（Release，需重新配置）
+
+配置文件 `config.json` 会自动复制到 `build/` 目录。运行前编辑 `config.json`，将 `rtu_set_.device` 从 `"COM2"` 改为实际的串口设备路径（如 `"/dev/ttyUSB0"` 或 `"/dev/ttyS0"`）：
+
+```bash
+# 查看可用串口
+ls /dev/ttyUSB* /dev/ttyS* 2>/dev/null
+
+# 赋予串口读写权限（如需要）
+sudo usermod -aG dialout $USER
+# 重新登录后生效
+```
+
+#### 运行
+
+```bash
+./build/moto_control
+```
+
+进入 REPL 后输入 `help` 查看所有命令。
+
+#### 打包
+
+```bash
+# 生成 tar.gz 包
+cd build && cpack -G TGZ
 ```
 
 ---

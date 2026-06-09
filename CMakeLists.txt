@@ -4,6 +4,11 @@ project(moto_control LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ── Platform: pthread (Linux / Unix) ─────────────────────
+if(UNIX AND NOT APPLE)
+    find_package(Threads REQUIRED)
+endif()
+
 # ── spdlog ────────────────────────────────────────────
 include(FetchContent)
 FetchContent_Declare(
@@ -31,7 +36,12 @@ add_library(modbus STATIC
 target_include_directories(modbus PUBLIC include/libmodbus)
 target_compile_definitions(modbus PUBLIC MODBUS_STATIC)
 if(WIN32)
+    # Windows: Winsock for modbus TCP
     target_link_libraries(modbus PUBLIC ws2_32)
+endif()
+if(UNIX)
+    # Linux / Unix: modbus RTU needs termios; TCP needs standard sockets
+    target_link_libraries(modbus PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 # ── executable ────────────────────────────────────────
@@ -47,6 +57,9 @@ target_include_directories(moto_control PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 target_link_libraries(moto_control PRIVATE modbus spdlog::spdlog)
+if(UNIX AND NOT APPLE)
+    target_link_libraries(moto_control PRIVATE Threads::Threads)
+endif()
 
 # copy config.json to output
 add_custom_command(TARGET moto_control POST_BUILD
@@ -63,6 +76,9 @@ add_custom_command(TARGET moto_control POST_BUILD
 if(MSVC)
     target_compile_options(moto_control PRIVATE /utf-8)
     target_compile_options(modbus PRIVATE /utf-8)
+else()
+    # GCC / Clang: warn on common issues but don't be pedantic
+    target_compile_options(moto_control PRIVATE -Wall -Wextra)
 endif()
 
 # ── Packaging (CPack + WiX MSI) ──────────────────────
@@ -71,8 +87,10 @@ install(TARGETS moto_control RUNTIME DESTINATION .)
 install(FILES assets/config.json DESTINATION .)
 
 # Bundle MSVC redistributable DLLs alongside the exe (not in bin/)
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
-include(InstallRequiredSystemLibraries)
+if(WIN32)
+    set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
+    include(InstallRequiredSystemLibraries)
+endif()
 
 # CPack common settings
 set(CPACK_PACKAGE_NAME "moto_control")
