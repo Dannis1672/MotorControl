@@ -22,7 +22,9 @@
 #include "modbus-version.h"
 
 #if defined(_MSC_VER)
-# if defined(DLLBUILD)
+# if defined(MODBUS_STATIC)
+#  define MODBUS_API
+# elif defined(DLLBUILD)
 /* define DLLBUILD when building the DLL */
 #  define MODBUS_API __declspec(dllexport)
 # else
