@@ -8,7 +8,7 @@
 #include <thread>
 
 #include <spdlog/spdlog.h>
-#include <modbus.h>
+#include <libmodbus/modbus.h>
 
 #include "json.hpp"
 #include "control/MotionControl.h"
