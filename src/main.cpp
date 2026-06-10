@@ -16,6 +16,7 @@
 #include <Windows.h>
 #endif
 #include "control/ChuangRui_Control.h"
+#include "server/HttpServer.h"
 
 using json = nlohmann::json;
 
@@ -356,36 +357,70 @@ void CommandLine::print_help() {
 // main
 // ============================================================
 
-int main() {
+int main(int argc, char* argv[]) {
 #ifdef _WIN32
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 #endif
 
     // 加载配置并初始化日志系统
+    json app_config;
     {
         std::ifstream log_cfg_file("config.json");
         if (log_cfg_file.is_open()) {
-            auto cfg = json::parse(log_cfg_file);
-            moto::log::init(cfg);
+            app_config = json::parse(log_cfg_file);
+            moto::log::init(app_config);
         } else {
             moto::log::init(json{});
         }
     }
 
-    ChuangRui_Control ctrl;
+    // 读取 HTTP 端口配置（默认 0 = 禁用 HTTP 模式）
+    int http_port = app_config.value("HttpPort", 0);
 
-    try {
-        CommandLine cli(ctrl);
-        cli.run();
-    } catch (const std::exception& e) {
-        spdlog::critical("未捕获异常: {}", e.what());
-    } catch (...) {
-        spdlog::critical("未捕获的未知异常");
+    // 命令行参数 --http <port> 可覆盖配置
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "--http" && i + 1 < argc) {
+            http_port = std::stoi(argv[++i]);
+        } else if (arg == "--help" || arg == "-h") {
+            std::cout << "Usage: moto_control [--http <port>]\n"
+                         "  --http <port>  启动 HTTP 服务器模式\n"
+                         "  (无参数)       交互式命令行模式\n";
+            return 0;
+        }
     }
 
-    std::cout << "按 Enter 退出..." << std::endl;
-    std::string _s;
-    std::getline(std::cin, _s);
+    ChuangRui_Control ctrl;
+
+    if (http_port > 0) {
+        // ── HTTP 服务器模式 ──────────────────────────
+        spdlog::info("启动 HTTP 服务器模式，端口 {}", http_port);
+        HttpServer server(ctrl, static_cast<unsigned short>(http_port));
+
+        std::thread server_thread([&server]() {
+            server.run();
+        });
+
+        std::cout << "HTTP 服务器已启动: http://localhost:" << http_port << std::endl;
+        std::cout << "按 Ctrl+C 退出..." << std::endl;
+
+        server_thread.join();
+    } else {
+        // ── 交互式命令行模式 ──────────────────────────
+        try {
+            CommandLine cli(ctrl);
+            cli.run();
+        } catch (const std::exception& e) {
+            spdlog::critical("未捕获异常: {}", e.what());
+        } catch (...) {
+            spdlog::critical("未捕获的未知异常");
+        }
+
+        std::cout << "按 Enter 退出..." << std::endl;
+        std::string _s;
+        std::getline(std::cin, _s);
+    }
+
     return 0;
 }

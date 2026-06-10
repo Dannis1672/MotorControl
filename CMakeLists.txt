@@ -9,6 +9,9 @@ if(UNIX AND NOT APPLE)
     find_package(Threads REQUIRED)
 endif()
 
+# ── Boost (HTTP server) ───────────────────────────────
+find_package(Boost REQUIRED COMPONENTS system)
+
 # ── spdlog ────────────────────────────────────────────
 include(FetchContent)
 FetchContent_Declare(
@@ -53,13 +56,14 @@ add_executable(moto_control
     src/control/ModbusClient.cpp
     src/control/ModbusClient.h
     src/control/MotionControl.h
+    src/server/HttpServer.h
 )
 target_include_directories(moto_control PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/plugins
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
-target_link_libraries(moto_control PRIVATE modbus spdlog::spdlog)
+target_link_libraries(moto_control PRIVATE modbus spdlog::spdlog Boost::system)
 if(UNIX AND NOT APPLE)
     target_link_libraries(moto_control PRIVATE Threads::Threads)
 endif()

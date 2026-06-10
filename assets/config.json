@@ -82,6 +82,7 @@
 
   "ModbusRetryDelayMs": 100,
   "ReadInterval": 200,
+  "HttpPort": 0,
   "Long_delay": 6000,
   "First_time_delay": 500,
   "Normal_delay": 10

@@ -362,12 +362,12 @@ Result ChuangRui_Control::AxisMove(Axis axis, float distance) {//单轴运动
 	else
 	{
 		*(&out_data.Z轴移动距离 + axis * 3) = distance * Motor_ratio[axis];
-		t = Task::makeWrite(24 + 6 * axis, 2, (uint16_t*)(&out_data.Z轴移动距离 + 3 * axis));
+		t = ModbusClient::Task::makeWrite(24 + 6 * axis, 2, (uint16_t*)(&out_data.Z轴移动距离 + 3 * axis));
 		modbus_.pushTask(t);
 		*(uint16_t*)&out_data.MW11 |= (1 << (axis + 3));//3为bit值偏移量
 	}
 
-	t = Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
+	t = ModbusClient::Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
 	modbus_.pushTask(t);
 
 	int count = 0;
@@ -403,7 +403,7 @@ Result ChuangRui_Control::AxisMove(Axis axis, float distance) {//单轴运动
 			{
 				*(uint16_t*)&out_data.MW11 &= (~(1 << (axis + 3)));//3为bit值偏移量
 			}
-			t = Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
+			t = ModbusClient::Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
 			modbus_.pushTask(t);
 
 			break;
@@ -420,7 +420,7 @@ Result ChuangRui_Control::AxisMove(Axis axis, float distance) {//单轴运动
 Result ChuangRui_Control::AxisToZero(Axis axis) {	// 设置回原点指令位
 	ModbusClient::Task t;
 	*(uint16_t*)&out_data.MW11 |= (1 << axis);
-	t = Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
+	t = ModbusClient::Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
 	modbus_.pushTask(t);
 
 	// 等待回零完成
@@ -436,7 +436,7 @@ Result ChuangRui_Control::AxisToZero(Axis axis) {	// 设置回原点指令位
 		bool stopFlag = (*(uint16_t*)&MyData.MW12_12_14 & (1 << (12 + axis))) >> (12 + axis);
 		if (stopFlag) {
 			*(uint16_t*)&out_data.MW11 &= ~(1 << axis);
-			t = Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
+			t = ModbusClient::Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
 			modbus_.pushTask(t);
 		
 		}
@@ -453,7 +453,7 @@ Result ChuangRui_Control::AxisToZero(Axis axis) {	// 设置回原点指令位
 Result  ChuangRui_Control::AxisStop(Axis axis) {	// 清除运动开始指令位,使运动停止
 	ModbusClient::Task t;
 	*(uint16_t*)&out_data.MW11 &= ~(1 << (axis + 3));
-	t = Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
+	t = ModbusClient::Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
 	modbus_.pushTask(t);
 	return Result::Success;
 }
@@ -473,32 +473,32 @@ Result ChuangRui_Control::WriteBit(UIButton io, bool value) {//设置对应参�
 		// 0: Light
 	case UIButton::Light:
 		out_data.MW10.light = value ? 1 : 0;  // value 为 true → 写 1，false → 写 0
-		t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+		t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 		break;
 
 		// 1: ReSet
 	case UIButton::ReSet:
 		out_data.MW10.security = value ? 1 : 0;
-		t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+		t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 		break;
 
 		// 2: Door 
 	case UIButton::Door:
 		out_data.MW13_MW14.腔门锁上电状态 = value ? 1 : 0;
-		t = Task::makeWrite(12, 1, (uint16_t*)&out_data.MW13_MW14);
+		t = ModbusClient::Task::makeWrite(12, 1, (uint16_t*)&out_data.MW13_MW14);
 		break;
 
 		// 3: GasCharge
 	case UIButton::GasCharge:
 		out_data.MW10.big_valve = value ? 1 : 0;
 		out_data.MW10.small_valve = value ? 1 : 0;
-		t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+		t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 		break;
 
 		// 4: LaserEnabled
 	case UIButton::LaserEnabled:
 		out_data.MW10.laser_enabled = value ? 1 : 0;
-		t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+		t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 		break;
 
 		// 5: BackFlush
@@ -517,7 +517,7 @@ Result ChuangRui_Control::WriteBit(UIButton io, bool value) {//设置对应参�
 		// 8: Ventilate
 	case UIButton::Ventilate:
 		out_data.MW10.ventilate = value ? 1 : 0;
-		t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+		t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 		break;
 
 		// 9; 加工模式切换
@@ -531,13 +531,13 @@ Result ChuangRui_Control::WriteBit(UIButton io, bool value) {//设置对应参�
 		// 11: LaserPower 
 	case UIButton::LaserPower:
 		out_data.MW10.lase_power = value ? 1 : 0;
-		t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+		t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 		break;
 
 		// 12: LaserIndicate 
 	case UIButton::LaserIndicate:
 		out_data.MW10.laser_indicator = value ? 1 : 0;
-		t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+		t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 		break;
 
 		// 13: 铺粉控制
@@ -571,7 +571,7 @@ Result ChuangRui_Control::WriteBit(UIButton io, bool value) {//设置对应参�
 		//  19: MotorPower
 	case UIButton::MotorPower:
 		out_data.MW10.motor_power = value ? 1 : 0;
-		t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+		t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 		break;
 
 	default:
@@ -590,25 +590,25 @@ Result ChuangRui_Control::WriteFloat(UIFloat param, float value) {//环境参数
 		//  0: CharmberPressure
 	case UIFloat::CharmberPressure:
 		out_data.腔体压力 = static_cast<int16_t>(value);
-		t = Task::makeWrite(54, 1, (uint16_t*)&out_data.腔体压力);
+		t = ModbusClient::Task::makeWrite(54, 1, (uint16_t*)&out_data.腔体压力);
 		break;
 
 		//  1: PressureDown
 	case UIFloat::PressureDown:
 		out_data.压力预警设定值 = static_cast<int16_t>(value);
-		t = Task::makeWrite(42, 1, (uint16_t*)&out_data.压力预警设定值);
+		t = ModbusClient::Task::makeWrite(42, 1, (uint16_t*)&out_data.压力预警设定值);
 		break;
 
 		//  2: OxygenRatio
 	case UIFloat::OxygenRatio:
 		out_data.氧含量高精度 = static_cast<int16_t>(value);
-		t = Task::makeWrite(52, 1, (uint16_t*)&out_data.氧含量高精度);
+		t = ModbusClient::Task::makeWrite(52, 1, (uint16_t*)&out_data.氧含量高精度);
 		break;
 
 		//  3: OxygenRatioDown
 	case UIFloat::OxygenRatioDown:
 		out_data.氧含量低精度 = static_cast<int16_t>(value);
-		t = Task::makeWrite(51, 1, (uint16_t*)&out_data.氧含量低精度);
+		t = ModbusClient::Task::makeWrite(51, 1, (uint16_t*)&out_data.氧含量低精度);
 		break;
 
 		//  4: WindSpeed
@@ -618,7 +618,7 @@ Result ChuangRui_Control::WriteFloat(UIFloat param, float value) {//环境参数
 		//  5: windPressure
 	case UIFloat::windPressure:
 		out_data.风压设定值 = static_cast<int16_t>(value);
-		t = Task::makeWrite(41, 1, (uint16_t*)&out_data.风压设定值);
+		t = ModbusClient::Task::makeWrite(41, 1, (uint16_t*)&out_data.风压设定值);
 		break;
 
 		//  6: Temperature
@@ -671,7 +671,7 @@ void ChuangRui_Control::ProcessBegin() {//C轴回零实现
 	//打开电机电源
 	out_data.MW10.motor_power = 1;
 	//发送
-	t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+	t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 	modbus_.pushTask(t);
 
 };
@@ -687,9 +687,9 @@ void ChuangRui_Control::ProcessFinish() {
 	out_data.MW10.motor_power = 0;
 	// 发送任务
 	ModbusClient::Task t;
-	t = Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
+	t = ModbusClient::Task::makeWrite(10, 1, (uint16_t*)&out_data.MW10);
 	modbus_.pushTask(t);
-	t = Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
+	t = ModbusClient::Task::makeWrite(11, 1, (uint16_t*)&out_data.MW11);
 	modbus_.pushTask(t);
 
 };
