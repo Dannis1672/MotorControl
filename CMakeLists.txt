@@ -50,6 +50,8 @@ add_executable(moto_control
     src/main.cpp
     src/control/ChuangRui_Control.cpp
     src/control/ChuangRui_Control.h
+    src/control/ModbusClient.cpp
+    src/control/ModbusClient.h
     src/control/MotionControl.h
 )
 target_include_directories(moto_control PRIVATE

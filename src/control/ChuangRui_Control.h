@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "json.hpp"
+#include "control/ModbusClient.h"
 #include "control/MotionControl.h"
 
 class ChuangRui_Control : public MotionControl::Control {
@@ -28,10 +29,9 @@ class ChuangRui_Control : public MotionControl::Control {
   void ProcessFinish() override;
 
  private:
-  void Modbus();
   void ReadRegister();
   Result Z_F_Move(float zdistance, float fdistance);
   std::atomic<bool> running_{false};
-  std::thread modbus_thread_;
   std::thread read_thread_;
+  ModbusClient modbus_;
 };
