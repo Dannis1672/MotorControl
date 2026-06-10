@@ -52,7 +52,7 @@ int ModbusClient::readRegisters(int addr, int nb, uint16_t* dest) {
     if (!ctx_) return -1;
     int ret = modbus_read_registers(ctx_, addr, nb, dest);
     if (ret == -1) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(retry_delay_ms_));
         ret = modbus_read_registers(ctx_, addr, nb, dest);
     }
     return ret;
@@ -62,7 +62,7 @@ int ModbusClient::writeRegisters(int addr, int nb, const uint16_t* data) {
     if (!ctx_) return -1;
     int ret = modbus_write_registers(ctx_, addr, nb, data);
     if (ret == -1) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(retry_delay_ms_));
         ret = modbus_write_registers(ctx_, addr, nb, data);
     }
     return ret;
@@ -76,6 +76,16 @@ void ModbusClient::pushTask(const Task& task) {
         task_queue_.push(task);
     }
     queue_cv_.notify_one();
+}
+
+// ── 周期性读取 ────────────────────────────────────────────
+
+void ModbusClient::enablePeriodicRead(int addr, int count, int interval_ms) {
+    periodic_read_enabled_ = true;
+    periodic_read_addr_    = addr;
+    periodic_read_count_   = count;
+    periodic_read_interval_ms_ = interval_ms;
+    last_read_time_ = std::chrono::steady_clock::now();
 }
 
 // ── Worker 线程 ─────────────────────────────────────────────
@@ -94,14 +104,10 @@ void ModbusClient::stopWorker() {
         worker_thread_.join();
     }
 
-    // 清空队列，释放未处理的读任务缓冲区
+    // 清空队列
     std::lock_guard<std::mutex> lock(queue_mutex_);
     while (!task_queue_.empty()) {
-        Task t = task_queue_.front();
         task_queue_.pop();
-        if (!t.is_write && t.data) {
-            delete[] t.data;
-        }
     }
 }
 
@@ -118,42 +124,34 @@ void ModbusClient::workerLoop() {
                 if (!worker_running_) break;
                 continue;
             }
-            task = task_queue_.front();
+            task = std::move(task_queue_.front());
             task_queue_.pop();
         }
 
-        if (!task.is_write) {
-            // ── 读操作 ──
-            int ret = modbus_read_registers(ctx_, task.address,
-                                            task.count, task.data);
+        // ── 写任务 ───────────────────────────────
+        int ret = modbus_write_registers(ctx_, task.address,
+                                         task.count, task.data.data());
+        if (ret == -1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(retry_delay_ms_));
+            ret = modbus_write_registers(ctx_, task.address,
+                                         task.count, task.data.data());
             if (ret == -1) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                ret = modbus_read_registers(ctx_, task.address,
-                                            task.count, task.data);
-                if (ret == -1) {
-                    spdlog::error("ModbusClient: read error addr={} num={}",
-                                  task.address, task.count);
-                    delete[] task.data;
-                    continue;
-                }
+                spdlog::error("ModbusClient: write error addr={} num={}",
+                              task.address, task.count);
             }
-            // 通知调用者读取完成
-            if (read_callback_) {
-                read_callback_(task.address, task.count, task.data);
-            }
-            delete[] task.data;
-        } else {
-            // ── 写操作 ──
-            int ret = modbus_write_registers(ctx_, task.address,
-                                             task.count, task.data);
-            if (ret == -1) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                ret = modbus_write_registers(ctx_, task.address,
-                                             task.count, task.data);
-                if (ret == -1) {
-                    spdlog::error("ModbusClient: write error addr={} num={}",
-                                  task.address, task.count);
+        }
+
+        // ── 周期性读取 ────────────────────────────
+        if (periodic_read_enabled_) {
+            auto now = std::chrono::steady_clock::now();
+            if (now - last_read_time_ >= std::chrono::milliseconds(periodic_read_interval_ms_)) {
+                uint16_t buf[56];
+                int ret = readRegisters(periodic_read_addr_,
+                                        periodic_read_count_, buf);
+                if (ret != -1 && read_callback_) {
+                    read_callback_(periodic_read_addr_, periodic_read_count_, buf);
                 }
+                last_read_time_ = now;
             }
         }
     }

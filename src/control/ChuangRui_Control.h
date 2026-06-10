@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include <atomic>
-#include <thread>
 
 #include "json.hpp"
 #include "control/ModbusClient.h"
@@ -29,9 +28,7 @@ class ChuangRui_Control : public MotionControl::Control {
   void ProcessFinish() override;
 
  private:
-  void ReadRegister();
   Result Z_F_Move(float zdistance, float fdistance);
   std::atomic<bool> running_{false};
-  std::thread read_thread_;
   ModbusClient modbus_;
 };
