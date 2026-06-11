@@ -12,6 +12,21 @@ endif()
 # ── Boost (HTTP server) ───────────────────────────────
 find_package(Boost REQUIRED COMPONENTS system)
 
+if(NOT Boost_FOUND)
+  # 没找到，自动下载 Boost（含 system 组件）
+  include(FetchContent)
+  set(BOOST_INCLUDE_LIBRARIES system) # 只拿需要的组件
+  set(BOOST_ENABLE_CMAKE ON)
+
+  FetchContent_Declare(
+    Boost
+    GIT_REPOSITORY https://github.com/boostorg/boost.git
+    GIT_TAG        boost-1.83.0
+    GIT_SHALLOW    ON
+  )
+  FetchContent_MakeAvailable(Boost)
+endif()
+
 # ── spdlog ────────────────────────────────────────────
 include(FetchContent)
 FetchContent_Declare(

@@ -70,7 +70,13 @@ private:
     {
         auto const method = req.method();
         auto const target = std::string(req.target());
-        spdlog::debug("HTTP {} {}", http::to_string(method), target);
+
+        // state 除外，记录 info 日志（含动作和参数）
+        if (target != "/api/state") {
+            std::string body = std::string(req.body());
+            spdlog::info("HTTP {} {} | 参数: {}",
+                         http::to_string(method), target, body);
+        }
 
         // 解析路径
         if (target == "/api/init" && method == http::verb::post) {

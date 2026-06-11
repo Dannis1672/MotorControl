@@ -340,6 +340,23 @@ Result ChuangRui_Control::ControlInitial()//初始化函数
 
 	running_ = true;
     modbus_.startWorker();
+
+    // 初始化完成后，做一次 PLC 寄存器快照同步读取并记录日志
+    {
+        uint16_t snapshot_buf[56] = {};
+        int ret = modbus_.readRegisters(10, 56, snapshot_buf);
+        if (ret != -1) {
+            {
+                std::unique_lock<std::shared_mutex> wlock(mutex_);
+                memcpy(&MyData, snapshot_buf, sizeof(MyData));
+            }
+            json snapshot = GetSystemState();
+            spdlog::info("PLC 寄存器快照:\n{}", snapshot.dump(2));
+        } else {
+            spdlog::warn("初始化时读取 PLC 寄存器快照失败 (modbus read error)");
+        }
+    }
+
 	return Result::Success;
 }
 
