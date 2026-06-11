@@ -58,146 +58,7 @@ static struct {
 	int data_bit = 8;//指定数据的位数
 	int stop_bit = 1;//指定停止位位数
 }rtu_set_;
-#pragma pack(push, 2)
-struct CharmRayPlcRegs
-{
-	//Modbus地址40011
-	struct MW10
-	{
-		unsigned short security : 1;        //0
-		unsigned short light : 1;            //1
-		unsigned short red_light : 1;        //2
-		unsigned short greeen_light : 1;    //3
-		unsigned short blue_light : 1;        //4
-		unsigned short alarm : 1;            //5
-		unsigned short big_valve : 1;        //6
-		unsigned short small_valve : 1;    //7
-		unsigned short ventilate : 1;        //8
-		unsigned short lase_power : 1;        //9
-		unsigned short fan_power : 1;        //10
-		unsigned short motor_power : 1;        //11
-		unsigned short laser_indicator : 1;    //12
-		unsigned short laser_enabled : 1;    //13
-		unsigned short laser_on : 1;        //14
-		unsigned short fan_on : 1;            //15
-
-	}MW10;
-
-	//Modbus地址40012
-	struct MW11
-	{
-		unsigned short Z轴回原点指令 : 1;        //0
-		unsigned short F轴回原点指令 : 1;        //1
-		unsigned short C轴回原点指令 : 1;        //2
-		unsigned short Z轴运动开始指令 : 1;        //3
-		unsigned short F轴运动开始指令 : 1;        //4
-		unsigned short C轴运动开始指令 : 1;        //5
-		unsigned short unused_6_15 : 10;        //6-15, 共10位
-	}MW11;
-
-	//Modbus地址40013
-	struct MW13_MW14
-	{
-		//MW13
-		unsigned short 大充气阀状态 : 1;        //0
-		unsigned short 小充气阀状态 : 1;        //1
-		unsigned short 排气阀状态 : 1;            //2
-		unsigned short 急停安全继电器状态 : 1;    //3
-		unsigned short 腔门插到位信号 : 1;        //4
-		unsigned short 腔门锁上电状态 : 1;        //5
-		unsigned short 激光器有电信号 : 1;        //6
-		unsigned short 风机有电信号 : 1;            //7
-		unsigned short 电机有电信号 : 1;        //8
-		//MW14    
-		unsigned short Z轴原点标志 : 1;            //9
-		unsigned short F轴原点标志 : 1;            //10
-		unsigned short C轴原点标志 : 1;            //11
-		//
-		unsigned short unused_12_15 : 4;        //第12位至第15位，共计4位
-	}MW13_MW14;
-
-	//Modbus地址40014
-	struct MW12
-	{
-		unsigned short 激光器报警 : 1;            //0
-		unsigned short 风机报警 : 1;            //1
-		unsigned short unused_2_15 : 14;        //第2位到第15位，共计14位
-	}MW12;
-
-
-	//Modbus地址40015
-	struct MW12_12_14
-	{
-		unsigned short Z轴驱动器报警 : 1;        //0
-		unsigned short Z轴运动超时报警 : 1;        //1
-		unsigned short F轴驱动器报警 : 1;        //2
-		unsigned short F轴运动超时报警 : 1;        //3
-		unsigned short C轴驱动器报警 : 1;        //4
-		unsigned short C轴运动超时报警 : 1;        //5
-		unsigned short Z轴正限位 : 1;            //6
-		unsigned short F轴正限位 : 1;            //7
-		unsigned short C轴正限位 : 1;            //8
-		unsigned short Z轴负限位 : 1;            //9
-		unsigned short F轴负限位 : 1;            //10
-		unsigned short C轴负限位 : 1;            //11
-		unsigned short Z轴运动结束信号 : 1;        //12
-		unsigned short F轴运动结束信号 : 1;        //13
-		unsigned short C轴运动结束信号 : 1;            //14
-		unsigned short 铺粉到位 : 1;                //15
-
-	}MW12_12_14;
-
-	//Modbus地址40016
-	struct STOP{
-		unsigned short Z轴运动停止信号 : 1;        //0
-		unsigned short F轴运动停止信号 : 1;        //1
-		unsigned short C轴运动停止信号 : 1;        //2
-		unsigned short unused_3_15 : 13;        //第3位到第15位，共计13位
-	}STOP;
-	//Mobus地址40017-40020
-	uint16_t unused_17_20[4];
-
-	//Mobus地址40021-40038
-	int32_t Z轴加速度;
-	int32_t Z轴运动速度;
-	int32_t Z轴移动距离;
-
-	int32_t F轴加速度;
-	int32_t F轴运动速度;
-	int32_t F轴移动距离;
-
-	int32_t C轴加速度;
-	int32_t C轴运动速度;
-	int32_t C轴移动距离;
-
-
-	//Modbus地址40039-40040
-	int16_t unused_39_40[2];
-
-	//Modbus地址40041-40043
-	int16_t 风压设定值;
-	int16_t 压力预警设定值;
-	int16_t 压力报警设定值;
-
-	//Modbus地址40044-40050
-	uint16_t usused44_50[7];
-
-	//Modbus地址40051-40054
-	int16_t 氧含量低精度;
-	int16_t 氧含量高精度;
-	int16_t 风压实际值;
-	int16_t 腔体压力;
-
-	//Modbus地址40055-40060
-	uint16_t usused55_60[6];
-
-	//Modbus地址40061-40066
-	int32_t Z轴当前位置;
-	int32_t F轴当前位置;
-	int32_t C轴当前位置;
-
-};
-#pragma pack(pop)
+#include "control/CharmRayPlcRegs.h"
 
 static CharmRayPlcRegs out_data;
 static CharmRayPlcRegs MyData;
@@ -801,3 +662,42 @@ nlohmann::json ChuangRui_Control::GetSystemState() {
 	}
 	 return state;
 }
+
+#ifdef MOTOCONTROL_TEST
+void ChuangRui_Control::TestSetRegisters(const CharmRayPlcRegs& regs) {
+    std::unique_lock<std::shared_mutex> wlock(mutex_);
+    memcpy(&MyData, &regs, sizeof(MyData));
+}
+
+float ChuangRui_Control::TestGetMotorRatio(int axis) {
+    if (axis < 0 || axis > 2) return 0.0f;
+    return Motor_ratio[axis];
+}
+
+float ChuangRui_Control::TestGetMoveDistance(int axis) {
+    switch (axis) {
+        case 0: return Z_Move_Distance;
+        case 1: return F_Move_Distance;
+        case 2: return C_Move_Distance;
+    }
+    return 0.0f;
+}
+
+float ChuangRui_Control::TestGetAccelerate(int axis) {
+    switch (axis) {
+        case 0: return Z_Accelerate;
+        case 1: return F_Accelerate;
+        case 2: return C_Accelerate;
+    }
+    return 0.0f;
+}
+
+float ChuangRui_Control::TestGetVelocity(int axis) {
+    switch (axis) {
+        case 0: return Z_Velocity;
+        case 1: return F_Velocity;
+        case 2: return C_Velocity;
+    }
+    return 0.0f;
+}
+#endif

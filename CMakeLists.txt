@@ -122,4 +122,47 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Motor Control Application")
 set(CPACK_VERBATIM_VARIABLES TRUE)
 
 set(CPACK_GENERATOR "ZIP")
+# ── GoogleTest ────────────────────────────────────────
+option(BUILD_TESTING "Build unit tests" ON)
+if(BUILD_TESTING)
+    include(FetchContent)
+    FetchContent_Declare(
+        googletest
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        v1.14.0
+    )
+    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(googletest)
+
+    set(TEST_SOURCES
+        test/test_plc_regs.cpp
+        test/test_modbus_task.cpp
+        test/test_get_state.cpp
+    )
+
+    add_executable(moto_control_test ${TEST_SOURCES}
+        src/control/ChuangRui_Control.cpp
+        src/control/ModbusClient.cpp
+    )
+    target_include_directories(moto_control_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/plugins
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_compile_definitions(moto_control_test PRIVATE MOTOCONTROL_TEST)
+    target_link_libraries(moto_control_test PRIVATE modbus spdlog::spdlog GTest::gtest_main)
+
+    if(UNIX AND NOT APPLE)
+        target_link_libraries(moto_control_test PRIVATE Threads::Threads)
+    endif()
+
+    if(MSVC)
+        target_compile_options(moto_control_test PRIVATE /utf-8)
+    endif()
+
+    include(GoogleTest)
+    gtest_discover_tests(moto_control_test)
+endif()
+
 include(CPack)
