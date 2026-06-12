@@ -121,14 +121,14 @@ Result ChuangRui_Control::ControlInitial()//初始化函数
 	MyData.C轴运动速度 = config_get(global_config, "C轴运动速度", 0);
 	MyData.C轴移动距离 = config_get(global_config, "C轴移动距离", 0);
 
-	MyData.风压设定值 = config_get(global_config, "风压设定值", 0);
-	MyData.压力预警设定值 = config_get(global_config, "压力预警设定值", 0);
-	MyData.压力报警设定值 = config_get(global_config, "压力报警设定值", 0);
+	MyData.风压设定值 = static_cast<int16_t>(config_get(global_config, "风压设定值", 0));
+	MyData.压力预警设定值 = static_cast<int16_t>(config_get(global_config, "压力预警设定值", 0));
+	MyData.压力报警设定值 = static_cast<int16_t>(config_get(global_config, "压力报警设定值", 0));
 
-	MyData.氧含量低精度 = config_get(global_config, "氧含量低精度", 0);
-	MyData.氧含量高精度 = config_get(global_config, "氧含量高精度", 0);
-	MyData.风压实际值 = config_get(global_config, "风压实际值", 0);
-	MyData.腔体压力 = config_get(global_config, "腔体压力", 0);
+	MyData.氧含量低精度 = static_cast<int16_t>(config_get(global_config, "氧含量低精度", 0));
+	MyData.氧含量高精度 = static_cast<int16_t>(config_get(global_config, "氧含量高精度", 0));
+	MyData.风压实际值 = static_cast<int16_t>(config_get(global_config, "风压实际值", 0));
+	MyData.腔体压力 = static_cast<int16_t>(config_get(global_config, "腔体压力", 0));
 
 	MyData.Z轴当前位置 = config_get(global_config, "Z轴当前位置", 0);
 	MyData.F轴当前位置 = config_get(global_config, "F轴当前位置", 0);
@@ -170,17 +170,17 @@ Result ChuangRui_Control::ControlInitial()//初始化函数
 	C_Accelerate = config_get(global_config, "C_Accelerate", 350.0f);
 	C_Velocity = config_get(global_config, "C_Velocity", 150.0f);
 
-    out_data.Z轴加速度 = Z_Accelerate * Motor_ratio[0];
-    out_data.Z轴运动速度 = Z_Velocity * Motor_ratio[0];
-    out_data.Z轴移动距离 = Z_Move_Distance * Motor_ratio[0];
+    out_data.Z轴加速度 = static_cast<int32_t>(Z_Accelerate * Motor_ratio[0]);
+    out_data.Z轴运动速度 = static_cast<int32_t>(Z_Velocity * Motor_ratio[0]);
+    out_data.Z轴移动距离 = static_cast<int32_t>(Z_Move_Distance * Motor_ratio[0]);
 
-    out_data.F轴加速度 = F_Accelerate * Motor_ratio[1];
-    out_data.F轴运动速度 = F_Velocity * Motor_ratio[1];
-    out_data.F轴移动距离 = F_Move_Distance * Motor_ratio[1];
+    out_data.F轴加速度 = static_cast<int32_t>(F_Accelerate * Motor_ratio[1]);
+    out_data.F轴运动速度 = static_cast<int32_t>(F_Velocity * Motor_ratio[1]);
+    out_data.F轴移动距离 = static_cast<int32_t>(F_Move_Distance * Motor_ratio[1]);
 
-    out_data.C轴加速度 = C_Accelerate * Motor_ratio[2];
-    out_data.C轴运动速度 = C_Velocity * Motor_ratio[2];
-    out_data.C轴移动距离 = C_Move_Distance * Motor_ratio[2];
+    out_data.C轴加速度 = static_cast<int32_t>(C_Accelerate * Motor_ratio[2]);
+    out_data.C轴运动速度 = static_cast<int32_t>(C_Velocity * Motor_ratio[2]);
+    out_data.C轴移动距离 = static_cast<int32_t>(C_Move_Distance * Motor_ratio[2]);
 
     modbus_.writeRegisters(20, 18, (uint16_t*)&out_data.Z轴加速度);
 
@@ -239,7 +239,7 @@ Result ChuangRui_Control::AxisMove(Axis axis, float distance) {//单轴运动
 	//开始运动
 	else
 	{
-		*(&out_data.Z轴移动距离 + axis * 3) = distance * Motor_ratio[axis];
+		*(&out_data.Z轴移动距离 + axis * 3) = static_cast<int32_t>(distance * Motor_ratio[axis]);
 		t = ModbusClient::Task::makeWrite(24 + 6 * axis, 2, (uint16_t*)(&out_data.Z轴移动距离 + 3 * axis));
 		modbus_.pushTask(t);
 		*(uint16_t*)&out_data.MW11 |= (1 << (axis + 3));//3为bit值偏移量
@@ -249,14 +249,14 @@ Result ChuangRui_Control::AxisMove(Axis axis, float distance) {//单轴运动
 	modbus_.pushTask(t);
 
 	int count = 0;
-	int velocity = 1;  //当前运动轴速度
+	float velocity = 1.0f;  //当前运动轴速度
 	switch (axis) {
 	case Axis::Z: velocity = Z_Velocity; break;
 	case Axis::F: velocity = F_Velocity; break;
 	case Axis::C: velocity = C_Velocity; break;
 	}
 
-	int timeout = (abs(distance) / velocity*1000 + 2000) * 1000;//单位为ms
+	int timeout = static_cast<int>((abs(distance) / velocity * 1000.0f + 2000.0f) * 1000.0f);//单位为ms
 	timeout = max(timeout, 600);
 
 	while (count < timeout/10) {
@@ -528,10 +528,11 @@ Result ChuangRui_Control::WriteFloat(UIFloat param, float value) {//环境参数
 };
 
 bool ChuangRui_Control::IsFeed(float zd, float fup) {
-	Z_F_Move(0.04, -0.04);
-	AxisMove(Axis::C, 300 );//铺粉
+	(void)zd; (void)fup;
+	Z_F_Move(0.04f, -0.04f);
+	AxisMove(Axis::C, 300.0f);//铺粉
 	AxisToZero(Axis::C);//回零
-	AxisMove(Axis::Z, 0.04);//成型缸回升
+	AxisMove(Axis::Z, 0.04f);//成型缸回升
 	bool feed_ready = false;
 	{
 		shared_lock<shared_mutex> lck(mutex_);

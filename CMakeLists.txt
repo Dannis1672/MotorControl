@@ -96,11 +96,11 @@ add_custom_command(TARGET moto_control POST_BUILD
 
 # MSVC: UTF-8 source encoding
 if(MSVC)
-    target_compile_options(moto_control PRIVATE /utf-8)
+    target_compile_options(moto_control PRIVATE /utf-8 /W4)
     target_compile_options(modbus PRIVATE /utf-8)
 else()
     # GCC / Clang: warn on common issues but don't be pedantic
-    target_compile_options(moto_control PRIVATE -Wall -Wextra)
+    target_compile_options(moto_control PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endif()
 
 # ── Packaging (CPack + WiX MSI) ──────────────────────
@@ -150,7 +150,11 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
-    target_compile_definitions(moto_control_test PRIVATE MOTOCONTROL_TEST)
+    target_compile_options(moto_control_test PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8 /W4>)
+    target_compile_definitions(moto_control_test PRIVATE MOTOCONTROL_TEST SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_OFF)
+    if(NOT MSVC)
+        target_compile_options(moto_control_test PRIVATE -Wall -Wextra)
+    endif()
     target_link_libraries(moto_control_test PRIVATE modbus spdlog::spdlog GTest::gtest_main)
 
     if(UNIX AND NOT APPLE)

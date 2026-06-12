@@ -146,9 +146,9 @@ void ModbusClient::workerLoop() {
             auto now = std::chrono::steady_clock::now();
             if (now - last_read_time_ >= std::chrono::milliseconds(periodic_read_interval_ms_)) {
                 uint16_t buf[56];
-                int ret = readRegisters(periodic_read_addr_,
+                int rd = readRegisters(periodic_read_addr_,
                                         periodic_read_count_, buf);
-                if (ret != -1 && read_callback_) {
+                if (rd != -1 && read_callback_) {
                     read_callback_(periodic_read_addr_, periodic_read_count_, buf);
                 }
                 last_read_time_ = now;
